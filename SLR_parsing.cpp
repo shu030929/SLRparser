@@ -6,11 +6,10 @@
 #include <stack>
 #include <string>
 #include <utility>
-#include <functional> // std::hash 사용
+#include <functional> 
 
 using namespace std;
 
-// pair<int, string>의 해시 함수를 정의하는 구조체
 struct hash_pair {
     template <class T1, class T2>
     size_t operator()(const pair<T1, T2>& p) const {
@@ -218,6 +217,7 @@ unordered_map<pair<int, string>, pair<string, int>, hash_pair> parsing_table = {
     {{12, "$"}, {"REDUCE", 5}},
     {{53, "$"}, {"REDUCE", 18}},
 
+//GOTO 문 ***
     {{0, "CODE"}, {"GOTO", 1}},
     {{0, "VDECL"}, {"GOTO", 2}},
     {{0, "FDECL"}, {"GOTO", 3}},
@@ -361,7 +361,7 @@ unordered_map<pair<int, string>, pair<string, int>, hash_pair> parsing_table = {
     {{74, "rbrace"}, {"GOTO", 75}}
 };
 
-
+//grammar 규칙 ***
 unordered_map<int, pair<string, string>> grammar_rules = {
     {0, {"START", "CODE"}},
     {1, {"CODE", "VDECL CODE"}},
@@ -399,20 +399,22 @@ unordered_map<int, pair<string, string>> grammar_rules = {
     {33, {"ELSE", ""}},
     {34, {"RETURN", "return RHS semi"}}
 };
+
 struct TreeNode {
     string name;
     vector<TreeNode*> children;
 
     TreeNode(string name) : name(name) {}
 };
+
 void parse_input(vector<string>& input_tokens) {
-    stack<int> state_stack; // 상태 스택
-    stack<TreeNode*> parse_stack; // 파스 스택
-    state_stack.push(0); // 초기 상태
+    stack<int> state_stack; 
+    stack<TreeNode*> parse_stack; 
+    state_stack.push(0); 
 
     while (true) {
-        int state = state_stack.top(); // 스택 최상위 상태 가져오기
-        string token = input_tokens.front(); // 입력 토큰의 첫 번째 요소 가져오기
+        int state = state_stack.top(); 
+        string token = input_tokens.front(); 
 
         auto action_iter = parsing_table.find(make_pair(state, token));
         if (action_iter == parsing_table.end()) {
@@ -431,12 +433,12 @@ void parse_input(vector<string>& input_tokens) {
         int action_value = action_iter->second.second;
 
         if (action_type == "SHIFT") {
-            // SHIFT 동작 수행
-            state_stack.push(action_value); // 상태 스택에 다음 상태 추가
-            input_tokens.erase(input_tokens.begin()); // 입력 토큰에서 처리한 토큰 제거
-            parse_stack.push(new TreeNode(token)); // 파스 스택에 토큰 추가
+            // SHIFT 동작 수행부
+            state_stack.push(action_value); 
+            input_tokens.erase(input_tokens.begin()); 
+            parse_stack.push(new TreeNode(token)); 
         } else if (action_type == "REDUCE") {
-            // REDUCE 동작 수행
+            // REDUCE 동작 수행부분 
             auto rule = grammar_rules[action_value];
             string lhs = rule.first;
             string rhs = rule.second;
@@ -445,16 +447,16 @@ void parse_input(vector<string>& input_tokens) {
             if (!rhs.empty()) {
                 int reduce_length = count(rhs.begin(), rhs.end(), ' ') + 1;
                 for (int i = 0; i < reduce_length; ++i) {
-                    state_stack.pop(); // 상태 스택에서 요소 제거
-                    children.push_back(parse_stack.top()); // 파스 스택에서 요소 제거
+                    state_stack.pop(); 
+                    children.push_back(parse_stack.top()); 
                     parse_stack.pop();
                 }
-                reverse(children.begin(), children.end()); // 자식 노드 순서 변경
+                reverse(children.begin(), children.end()); 
             }
 
             TreeNode* new_node = new TreeNode(lhs);
             new_node->children = children;
-            parse_stack.push(new_node); // 파스 스택에 새로운 노드 추가
+            parse_stack.push(new_node); 
 
             auto goto_iter = parsing_table.find(make_pair(state_stack.top(), lhs));
             if (goto_iter == parsing_table.end()) {
@@ -462,14 +464,14 @@ void parse_input(vector<string>& input_tokens) {
                 return;
             }
             int goto_state = goto_iter->second.second;
-            state_stack.push(goto_state); // 상태 스택에 GOTO 상태 추가
+            state_stack.push(goto_state);
         } else if (action_type == "ACCEPT") {
-            // ACCEPT 동작 수행
+            // ACCEPT 동작 수행부분 
             break;
         }
     }
 
-    // 파싱 트리 출력
+    // 파싱 트리 출력 *** 
     cout << "Parsing successful!" << endl;
     cout << "Parse tree:" << endl;
     function<void(TreeNode*, string)> print_tree = [&](TreeNode* node, string indent) {
@@ -479,7 +481,6 @@ void parse_input(vector<string>& input_tokens) {
         }
     };
 
-    // 보기 쉽게 트리 출력
     function<void(TreeNode*, string, bool)> print_tree_structure = [&](TreeNode* node, string prefix, bool is_last) {
         cout << prefix;
 
@@ -506,14 +507,12 @@ int main(int argc, char* argv[]) {
         cerr << "Error: No arguments provided" << endl;
         return 1;
     }
-
     string file_path = argv[1];
     ifstream input_file(file_path);
     if (!input_file) {
         cerr << "File does not exist" << endl;
         return 1;
     }
-
     stringstream buffer;
     buffer << input_file.rdbuf();
     input_file.close();
@@ -523,11 +522,8 @@ int main(int argc, char* argv[]) {
     while (buffer >> token) {
         input_tokens.push_back(token);
     }
-    input_tokens.push_back("$"); // 입력 토큰의 끝을 나타내기 위해 '$' 추가
-
-    // 파싱 수행
+    input_tokens.push_back("$"); 
     parse_input(input_tokens);
 
     return 0;
 }
-//commit 메세지 1
